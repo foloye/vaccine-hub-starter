@@ -1,4 +1,6 @@
+const bcrypt = require("bcrypt")
 const db = require("../db")
+const { BCRYPT_WORK_FACTOR} = require("../config")
 const {BadRequestError, UnauthorizedError} = require("../utils/errors")
 
 class User {
@@ -34,6 +36,8 @@ class User {
             throw new BadRequestError(`Duplicate email: ${credentials.email}`)
         }
         //take the users pass and hash it
+        const hashedPassword = await bcrypt.hash(credentials.password, BCRYPT_WORK_FACTOR)
+
         //take the users email, and lowercase it
         const lowercasedEmail = credentials.email.toLowerCase()
         //create a new user in the db with all info
@@ -49,7 +53,7 @@ class User {
             )
             VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id, email, location, date, first_name, last_name;
-        `, [lowercasedEmail, credentials.password, credentials.location, credentials.date,credentials.first_name, credentials.last_name])
+        `, [lowercasedEmail, hashedPassword, credentials.location, credentials.date,credentials.first_name, credentials.last_name])
 
         //return the user
         const user = result.rows[0]
